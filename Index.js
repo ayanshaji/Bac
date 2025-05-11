@@ -5,7 +5,9 @@ const getResponse = require('./chatbot');
 
 require('./Connection');
 const userModel = require('./Model/User');
-const bookModel = require('./Model/book'); // 👈 NEW
+const bookModel = require('./Model/book');
+const reviewModel = require('./Model/review'); // ✅ REQUIRED
+ // 👈 NEW
 
 // initialize
 const app = express();
@@ -143,6 +145,33 @@ app.post('/chatbot', (req, res) => {
     const reply = getResponse(message);
     res.json({ reply });
 });
+
+//review
+
+app.get('/reviews/:bookId', async (req, res) => {
+    try {
+      const reviews = await reviewModel.find({ bookId: req.params.bookId });
+      res.json(reviews);
+    } catch (err) {
+      res.status(500).json({ message: 'Failed to fetch reviews' });
+    }
+  });
+  
+  app.post('/reviews', async (req, res) => {
+    const { bookId, reviewer, rating, comment } = req.body;
+  
+    if (!bookId || !reviewer || !rating || !comment) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+  
+    try {
+      const newReview = new reviewModel({ bookId, reviewer, rating, comment });
+      await newReview.save();
+      res.status(201).json({ message: 'Review added successfully' });
+    } catch (err) {
+      res.status(500).json({ message: 'Failed to add review' });
+    }
+  });
 
 // Health Check
 app.get('/', (req, res) => {
